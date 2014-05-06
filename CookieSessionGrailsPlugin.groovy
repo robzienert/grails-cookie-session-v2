@@ -18,7 +18,6 @@
  */
 
 import org.springframework.web.filter.DelegatingFilterProxy
-import grails.util.Environment
 import com.granicus.grails.plugins.cookiesession.JavaSessionSerializer
 import com.granicus.grails.plugins.cookiesession.KryoSessionSerializer
 import com.granicus.grails.plugins.cookiesession.CookieSessionFilter
@@ -28,7 +27,7 @@ import com.granicus.grails.plugins.cookiesession.SecurityContextSessionPersisten
 
 class CookieSessionGrailsPlugin {
     // {major}.{minor}.{patch}.{bloomRelease}-BLOOM
-    def version = "2.0.14.1-BLOOM"
+    def version = "2.0.14.2-BLOOM"
     def grailsVersion = "1.2.4 > *"
     def title = "Cookie Session Plugin" // Headline display name of the plugin
     def author = "Ben Lucchesi"
@@ -76,15 +75,12 @@ class CookieSessionGrailsPlugin {
 
     def doWithSpring = {
 
-        if ( !application.config.grails.plugin.cookiesession.enabled ) {
-            return
-        }
-
         sessionRepository(CookieSessionRepository){
           grailsApplication = ref("grailsApplication")
         }
 
         cookieSessionFilter(CookieSessionFilter) {
+          grailsApplication = ref('grailsApplication')
           sessionRepository = ref("sessionRepository")
         }
 

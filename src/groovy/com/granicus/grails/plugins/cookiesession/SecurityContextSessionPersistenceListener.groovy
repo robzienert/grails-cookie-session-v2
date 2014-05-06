@@ -49,23 +49,25 @@ public class SecurityContextSessionPersistenceListener implements SessionPersist
     }
 
     public void beforeSessionSaved( SerializableSession session ){
-      log.trace "beforeSessionSaved()"
-      
-      log.trace session
+        if (grailsApplication.config.grails.plugin.cookiesession.enabled) {
+            log.trace "beforeSessionSaved()"
 
-      if( session.SPRING_SECURITY_SAVED_REQUEST_KEY ){
-        def sessionCookies = session.SPRING_SECURITY_SAVED_REQUEST_KEY.@cookies.findAll{ it.name =~ cookieName }
-        sessionCookies.each{
-          session.SPRING_SECURITY_SAVED_REQUEST_KEY.@cookies.remove(it)
+            log.trace session
+
+            if( session.SPRING_SECURITY_SAVED_REQUEST_KEY ){
+                def sessionCookies = session.SPRING_SECURITY_SAVED_REQUEST_KEY.@cookies.findAll{ it.name =~ cookieName }
+                sessionCookies.each{
+                    session.SPRING_SECURITY_SAVED_REQUEST_KEY.@cookies.remove(it)
+                }
+            }
+
+            if( session.SPRING_SECURITY_CONTEXT != securityContextHolder.getContext() ){
+                log.info "persisting security context to session"
+                session.SPRING_SECURITY_CONTEXT = securityContextHolder.getContext()
+            }
+            else{
+                log.trace "not persisting security context"
+            }
         }
-      }
-
-      if( session.SPRING_SECURITY_CONTEXT != securityContextHolder.getContext() ){
-        log.info "persisting security context to session"
-        session.SPRING_SECURITY_CONTEXT = securityContextHolder.getContext()
-      }
-      else{
-        log.trace "not persisting security context"
-      }
     }
 }

@@ -2,6 +2,8 @@ package com.granicus.grails.plugins.cookiesession;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+
+import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
@@ -23,6 +25,7 @@ public class CookieSessionFilter extends OncePerRequestFilter implements Initial
     final static Logger log = Logger.getLogger(CookieSessionFilter.class.getName());
     String sessionId = "gsession";
 
+    GrailsApplication grailsApplication;
     ApplicationContext applicationContext;
     ArrayList<SessionPersistenceListener> sessionPersistenceListeners;
 
@@ -57,6 +60,10 @@ public class CookieSessionFilter extends OncePerRequestFilter implements Initial
       return ( sessionRepository ); 
     }
 
+    public void setGrailsApplication(GrailsApplication grailsApplication) {
+        this.grailsApplication = grailsApplication;
+    }
+
     @Override
     protected void initFilterBean() {
     }
@@ -65,16 +72,20 @@ public class CookieSessionFilter extends OncePerRequestFilter implements Initial
     protected void doFilterInternal( HttpServletRequest request, 
             HttpServletResponse response, 
             FilterChain chain) throws IOException, ServletException {
- 
-      if( log.isTraceEnabled() ){ log.trace("doFilterInteral()"); }
-  
-      SessionRepositoryRequestWrapper requestWrapper = new SessionRepositoryRequestWrapper( request, sessionRepository );
-      requestWrapper.setServletContext( this.getServletContext() );
-      requestWrapper.setSessionPersistenceListeners(this.sessionPersistenceListeners);
-      requestWrapper.restoreSession();
 
-      SessionRepositoryResponseWrapper responseWrapper = new SessionRepositoryResponseWrapper( response, sessionRepository, requestWrapper );
-      responseWrapper.setSessionPersistenceListeners(this.sessionPersistenceListeners);
-      chain.doFilter(requestWrapper, responseWrapper);
+        if ((Boolean) grailsApplication.getFlatConfig().get("grails.plugin.cookiesession.enabled")) {
+            if( log.isTraceEnabled() ){ log.trace("doFilterInteral()"); }
+
+            SessionRepositoryRequestWrapper requestWrapper = new SessionRepositoryRequestWrapper( request, sessionRepository );
+            requestWrapper.setServletContext( getServletContext() );
+            requestWrapper.setSessionPersistenceListeners(this.sessionPersistenceListeners);
+            requestWrapper.restoreSession();
+
+            SessionRepositoryResponseWrapper responseWrapper = new SessionRepositoryResponseWrapper( response, sessionRepository, requestWrapper );
+            responseWrapper.setSessionPersistenceListeners(this.sessionPersistenceListeners);
+            chain.doFilter(requestWrapper, responseWrapper);
+        } else {
+            chain.doFilter(request, response);
+        }
     }
 }
